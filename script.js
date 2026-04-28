@@ -6,7 +6,7 @@ if (window.history.replaceState) {
     window.history.replaceState(null, null, urlLimpia);
 }
 // ¡RECUERDA PEGAR TU NUEVA URL AQUÍ!
-const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbwPl1saQ03qmoMhAptaUjRqCcxG5vhAVdgoeMGfPWV1veiObNRh5PgZjeZ_31r8dxvm/exec";
+const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbylfpsBL5MZwY0yz3NCvTW4HhUxRXrSXUgveyY-QEvdXnbZC_7CB2nLNykia8spRybT/exec";
 
 let usuarioActual = "";
 let cesta = [];
