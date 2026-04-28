@@ -1,25 +1,26 @@
-// --- CONFIGURACIÓN ---
 // --- LIMPIADOR DE URL ---
-// Esto quita el "index.html" y cualquier símbolo raro de la barra de direcciones sin recargar la página
+// Esto quita el "index.html" y símbolos raros al recargar o hacer clic en botones
 if (window.history.replaceState) {
     const urlLimpia = window.location.href.split('?')[0].replace('index.html', '');
     window.history.replaceState(null, null, urlLimpia);
 }
-// ¡RECUERDA PEGAR TU NUEVA URL AQUÍ!
-const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbylfpsBL5MZwY0yz3NCvTW4HhUxRXrSXUgveyY-QEvdXnbZC_7CB2nLNykia8spRybT/exec";
+
+// --- CONFIGURACIÓN ---
+// RECUERDA PEGAR TU URL DE GOOGLE APPS SCRIPT AQUÍ
+const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbwPl1saQ03qmoMhAptaUjRqCcxG5vhAVdgoeMGfPWV1veiObNRh5PgZjeZ_31r8dxvm/exec";
 
 let usuarioActual = "";
 let cesta = [];
 let cartaBuscada = null;
 
-let usuariosDB = JSON.parse(localStorage.getItem('mtgUsuariosDB')) || {};
+let usuariosDB = JSON.parse(localStorage.getItem('el99UsuariosDB')) || {};
 
 // --- SISTEMA DE NOTIFICACIONES ---
 function mostrarToast(mensaje) {
     const toast = document.getElementById("toast");
     toast.innerText = mensaje;
-    toast.className = "toast show";
-    setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+    toast.classList.add("show");
+    setTimeout(() => { toast.classList.remove("show"); }, 3000);
 }
 
 // --- AUTENTICACIÓN ---
@@ -44,13 +45,11 @@ function registrarUsuario(e) {
         return;
     }
 
-    // Guardamos usuario
     usuariosDB[user] = { password: pass };
-    localStorage.setItem('mtgUsuariosDB', JSON.stringify(usuariosDB));
+    localStorage.setItem('el99UsuariosDB', JSON.stringify(usuariosDB));
     
-    // Auto-Login directo sin alertas
     usuarioActual = user;
-    mostrarToast("¡Bienvenido, " + user + "!");
+    mostrarToast("¡Bienvenido a El99, " + user + "!");
     iniciarApp();
 }
 
@@ -103,7 +102,7 @@ async function buscarCarta() {
         const data = await res.json();
         
         if (data.status === 404) {
-            resDiv.innerHTML = "<div class='empty-state' style='color:#F4C2C2'>El hechizo falló. Carta no encontrada.</div>";
+            resDiv.innerHTML = "<div class='empty-state' style='color:red'>Carta no encontrada.</div>";
             return;
         }
 
@@ -114,13 +113,13 @@ async function buscarCarta() {
         };
 
         resDiv.innerHTML = `
-            <img src="${cartaBuscada.img}" style="width:160px; border-radius:8px; box-shadow:0 8px 16px rgba(0,0,0,0.6); margin-bottom:15px;">
-            <strong style="font-size:1.2rem; margin-bottom:5px;">${cartaBuscada.nombre}</strong>
-            <span style="font-size:1.5rem; font-weight:bold; color:var(--naranja-palo); margin-bottom:20px;">${cartaBuscada.precio}€</span>
-            <button class="btn-primary" onclick="añadirCesta()">Añadir a la Cesta</button>
+            <img src="${cartaBuscada.img}" style="width:160px; border-radius:8px; border: 2px solid #2F2F2F; box-shadow: 4px 4px 0px #F4C2C2; margin-bottom:15px;">
+            <strong style="font-size:1.2rem; margin-bottom:5px; display:block;">${cartaBuscada.nombre}</strong>
+            <span style="font-size:1.6rem; font-weight:bold; color:var(--naranja-el99); margin-bottom:20px; display:block;">${cartaBuscada.precio}€</span>
+            <button class="btn-primary" onclick="añadirCesta()">Añadir al Carrito</button>
         `;
     } catch (e) { 
-        resDiv.innerHTML = "<div class='empty-state' style='color:#F4C2C2'>Error de conexión con la API.</div>"; 
+        resDiv.innerHTML = "<div class='empty-state'>Error de conexión con la API.</div>"; 
     }
 }
 
@@ -152,11 +151,11 @@ function actualizarTabla() {
         total += parseFloat(item.precio);
         cuerpo.innerHTML += `
             <tr>
-                <td><strong style="color:var(--blanco);">${item.nombre}</strong></td>
+                <td>${item.nombre}</td>
                 <td class="text-center">1</td>
-                <td class="text-right" style="color:var(--rosa-palo);">${item.precio}€</td>
+                <td class="text-right">${item.precio}€</td>
                 <td class="text-center">
-                    <button style="background:transparent; color:#ff5252; border:1px solid #ff5252; padding:5px 10px; font-size:0.8rem;" onclick="eliminar(${i})">X</button>
+                    <button style="background:var(--rosa-palo); color:var(--gris-oscuro); padding:5px 10px; font-size:0.8rem;" onclick="eliminar(${i})">X</button>
                 </td>
             </tr>
         `;
@@ -177,12 +176,12 @@ async function enviarPedidoFinal() {
         return;
     }
     if (URL_GOOGLE_SCRIPT.includes("TU_URL")) {
-        mostrarToast("Error interno: URL de Google Script sin configurar.");
+        mostrarToast("Falta enlazar el código de Google Script.");
         return;
     }
 
     const btn = document.getElementById('btnEnviar');
-    btn.innerHTML = "Enviando al líder de la mesa... ⏳";
+    btn.innerHTML = "Procesando pedido... ⏳";
     btn.disabled = true;
 
     try {
@@ -196,14 +195,14 @@ async function enviarPedidoFinal() {
             })
         });
 
-        mostrarToast("¡Pedido enviado con éxito!");
+        mostrarToast("¡Pedido confirmado y enviado!");
         cesta = [];
         localStorage.removeItem(`cesta_${usuarioActual}`);
         actualizarTabla();
     } catch (e) {
-        mostrarToast("Hubo un error al enviar la información.");
+        mostrarToast("Error de conexión al enviar el pedido.");
     } finally {
-        btn.innerHTML = "Enviar Pedido Oficial 📤";
+        btn.innerHTML = "Confirmar Pedido 📤";
         btn.disabled = false;
     }
 }
