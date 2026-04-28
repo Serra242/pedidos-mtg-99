@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MTG Nexus Market</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="toast" class="toast">Mensaje de prueba</div>
+
+<div id="auth-container" class="overlay">
+    <div class="auth-wrapper">
+        <div class="auth-header">
+            <h1>MTG Nexus 🃏</h1>
+            <p>Gestiona tus pedidos de forma fácil</p>
+        </div>
+
+        <div id="login-box" class="auth-box">
+            <h2>Iniciar Sesión</h2>
+            <form id="formLogin" onsubmit="iniciarSesion(event)">
+                <div class="input-group">
+                    <label>Usuario</label>
+                    <input type="text" id="login-user" required placeholder="Tu nombre de mago">
+                </div>
+                <div class="input-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="login-pass" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn-primary">Entrar</button>
+            </form>
+            <p class="auth-switch">¿Nuevo en el grupo? <button type="button" class="btn-link" onclick="mostrarRegistro()">Crea tu perfil</button></p>
+        </div>
+
+        <div id="register-box" class="auth-box" style="display: none;">
+            <h2>Crear Perfil</h2>
+            <form id="formRegister" onsubmit="registrarUsuario(event)">
+                <div class="input-group">
+                    <label>Nombre de Usuario</label>
+                    <input type="text" id="reg-user" required placeholder="Ej: JaceBeleren">
+                </div>
+                <div class="input-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="reg-pass" required placeholder="Crea una contraseña">
+                </div>
+                <button type="submit" class="btn-secondary">Registrarse y Entrar</button>
+            </form>
+            <p class="auth-switch">¿Ya tienes cuenta? <button type="button" class="btn-link" onclick="mostrarLogin()">Vuelve al inicio</button></p>
+        </div>
+    </div>
+</div>
+
+<div id="app-container" style="display: none;">
+    <header>
+        <div class="header-content">
+            <h1>MTG Nexus 🃏</h1>
+            <div class="user-info">
+                <span>Jugador: <strong id="nombreUsuarioActivo" class="accent-text">Nadie</strong></span>
+                <button class="btn-logout" onclick="cerrarSesion()">Desconectar</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="panel search-panel">
+            <div class="panel-header">
+                <h2>Catálogo Scryfall</h2>
+            </div>
+            <div class="search-bar">
+                <input type="text" id="inputBusqueda" placeholder="Ej: Black Lotus, Lightning Bolt...">
+                <button onclick="buscarCarta()" class="btn-primary btn-search">Buscar</button>
+            </div>
+            <div id="resultadoBusqueda" class="card-preview">
+                <div class="empty-state">Busca una carta para empezar a montar tu pedido.</div>
+            </div>
+        </section>
+
+        <section class="panel cart-panel">
+            <div class="panel-header">
+                <h2>Tu Lista de Deseos</h2>
+            </div>
+            <div class="table-wrapper">
+                <table id="tablaCesta">
+                    <thead>
+                        <tr>
+                            <th>Carta</th>
+                            <th class="text-center">Cant.</th>
+                            <th class="text-right">Precio</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoCesta"></tbody>
+                </table>
+            </div>
+            <div class="cart-footer">
+                <div class="total-box">
+                    <span>Total Estimado:</span>
+                    <span class="total-price"><span id="precioTotal">0.00</span>€</span>
+                </div>
+                <button id="btnEnviar" class="btn-confirmar" onclick="enviarPedidoFinal()">
+                    Enviar Pedido Oficial 📤
+                </button>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
