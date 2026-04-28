@@ -1,29 +1,46 @@
-// --- LIMPIADOR DE URL ---
-// Esto quita el "index.html" y símbolos raros al recargar o hacer clic en botones
+// --- 1. LIMPIEZA DE URL ---
 if (window.history.replaceState) {
-    const urlLimpia = window.location.href.split('?')[0].replace('index.html', '');
-    window.history.replaceState(null, null, urlLimpia);
+    window.history.replaceState(null, null, window.location.pathname);
 }
 
-// --- CONFIGURACIÓN ---
-// RECUERDA PEGAR TU URL DE GOOGLE APPS SCRIPT AQUÍ
-const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbwPl1saQ03qmoMhAptaUjRqCcxG5vhAVdgoeMGfPWV1veiObNRh5PgZjeZ_31r8dxvm/exec";
+// --- 2. CONFIGURACIÓN FIREBASE ---
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
-let usuarioActual = "";
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyA-AnAC0egX4Lkftg_oBhZoJFpQMqD4u6U",
+  authDomain: "el99-4a9b7.firebaseapp.com",
+  projectId: "el99-4a9b7",
+  storageBucket: "el99-4a9b7.firebasestorage.app",
+  messagingSenderId: "672251205852",
+  appId: "1:672251205852:web:83ed0add63cbbad89d3c19",
+  measurementId: "G-PQ9YVVHLCT"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+// --- 3. CONFIGURACIÓN GOOGLE SCRIPT ---
+const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbwHKnvSMpbNFzJGf896-6O6w27yrOOXOaCDiyAXTgloGk5qx8fxqkqYkVyn_Avr8R82/exec";
+
+let usuarioNombre = "";
 let cesta = [];
-let cartaBuscada = null;
 
-let usuariosDB = JSON.parse(localStorage.getItem('el99UsuariosDB')) || {};
-
-// --- SISTEMA DE NOTIFICACIONES ---
-function mostrarToast(mensaje) {
-    const toast = document.getElementById("toast");
-    toast.innerText = mensaje;
-    toast.classList.add("show");
-    setTimeout(() => { toast.classList.remove("show"); }, 3000);
+// --- NOTIFICACIONES ---
+function mostrarToast(msj) {
+    const t = document.getElementById("toast");
+    t.innerText = msj;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 3500);
 }
 
-// --- AUTENTICACIÓN ---
+// --- CONTROL DE SESIÓN ---
 function mostrarRegistro() {
     document.getElementById('login-box').style.display = 'none';
     document.getElementById('register-box').style.display = 'block';
@@ -34,129 +51,103 @@ function mostrarLogin() {
     document.getElementById('login-box').style.display = 'block';
 }
 
-function registrarUsuario(e) {
-    e.preventDefault(); 
-    
-    const user = document.getElementById('reg-user').value.trim();
+// Registro Real en Firebase
+async function registrarUsuario(e) {
+    e.preventDefault();
+    const nombre = document.getElementById('reg-user').value;
+    const email = document.getElementById('reg-email').value;
     const pass = document.getElementById('reg-pass').value;
 
-    if (usuariosDB[user]) {
-        mostrarToast("Ese nombre ya está en uso.");
-        return;
+    try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
+        // Guardamos el nombre en el perfil de Firebase
+        await userCredential.user.updateProfile({ displayName: nombre });
+        mostrarToast("¡Cuenta creada! Bienvenido a El99.");
+    } catch (error) {
+        mostrarToast("Error: " + error.message);
     }
-
-    usuariosDB[user] = { password: pass };
-    localStorage.setItem('el99UsuariosDB', JSON.stringify(usuariosDB));
-    
-    usuarioActual = user;
-    mostrarToast("¡Bienvenido a El99, " + user + "!");
-    iniciarApp();
 }
 
-function iniciarSesion(e) {
+// Login Real en Firebase
+async function iniciarSesion(e) {
     e.preventDefault();
-    
-    const user = document.getElementById('login-user').value.trim();
+    const email = document.getElementById('login-email').value;
     const pass = document.getElementById('login-pass').value;
 
-    if (!usuariosDB[user] || usuariosDB[user].password !== pass) {
-        mostrarToast("Usuario o contraseña incorrectos.");
-        return;
+    try {
+        await auth.signInWithEmailAndPassword(email, pass);
+        mostrarToast("Acceso concedido.");
+    } catch (error) {
+        mostrarToast("Error: Usuario o contraseña incorrectos.");
     }
-
-    usuarioActual = user;
-    mostrarToast("¡Hola de nuevo, " + user + "!");
-    iniciarApp();
 }
 
-function iniciarApp() {
-    document.getElementById('formRegister').reset();
-    document.getElementById('formLogin').reset();
-    
-    document.getElementById('nombreUsuarioActivo').innerText = usuarioActual;
-    document.getElementById('auth-container').style.display = "none";
-    document.getElementById('app-container').style.display = "block";
-    
-    const guardado = localStorage.getItem(`cesta_${usuarioActual}`);
-    cesta = guardado ? JSON.parse(guardado) : [];
-    actualizarTabla();
-}
+// Escuchar cambios de sesión (Esto detecta si el usuario ya estaba logueado)
+auth.onAuthStateChanged(user => {
+    if (user) {
+        usuarioNombre = user.displayName || user.email.split('@')[0];
+        document.getElementById('nombreUsuarioActivo').innerText = usuarioNombre;
+        document.getElementById('auth-container').style.display = 'none';
+        document.getElementById('app-container').style.display = 'block';
+        actualizarTabla();
+    } else {
+        document.getElementById('app-container').style.display = 'none';
+        document.getElementById('auth-container').style.display = 'flex';
+    }
+});
 
 function cerrarSesion() {
-    usuarioActual = "";
-    document.getElementById('app-container').style.display = "none";
-    document.getElementById('auth-container').style.display = "flex";
-    mostrarLogin();
+    auth.signOut();
 }
 
-// --- TIENDA Y SCRYFALL ---
+// --- BUSCADOR SCRYFALL ---
 async function buscarCarta() {
-    const query = document.getElementById('inputBusqueda').value;
+    const q = document.getElementById('inputBusqueda').value;
     const resDiv = document.getElementById('resultadoBusqueda');
-    if (!query) return;
+    if(!q) return;
 
-    resDiv.innerHTML = "<div class='empty-state'>Invocando carta... 🌀</div>";
-    
+    resDiv.innerHTML = "<p>Invocando carta...</p>";
     try {
-        const res = await fetch(`https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(query)}`);
-        const data = await res.json();
+        const r = await fetch(`https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(q)}`);
+        const d = await r.json();
         
-        if (data.status === 404) {
-            resDiv.innerHTML = "<div class='empty-state' style='color:red'>Carta no encontrada.</div>";
-            return;
-        }
+        if(d.status === 404) return resDiv.innerHTML = "<p>No encontrada.</p>";
 
-        cartaBuscada = {
-            nombre: data.name,
-            precio: data.prices.eur || data.prices.usd || 0,
-            img: data.image_uris ? data.image_uris.small : (data.card_faces ? data.card_faces[0].image_uris.small : '')
+        const carta = {
+            nombre: d.name,
+            precio: d.prices.eur || d.prices.usd || 0,
+            img: d.image_uris ? d.image_uris.normal : d.card_faces[0].image_uris.normal
         };
 
         resDiv.innerHTML = `
-            <img src="${cartaBuscada.img}" style="width:160px; border-radius:8px; border: 2px solid #2F2F2F; box-shadow: 4px 4px 0px #F4C2C2; margin-bottom:15px;">
-            <strong style="font-size:1.2rem; margin-bottom:5px; display:block;">${cartaBuscada.nombre}</strong>
-            <span style="font-size:1.6rem; font-weight:bold; color:var(--naranja-el99); margin-bottom:20px; display:block;">${cartaBuscada.precio}€</span>
-            <button class="btn-primary" onclick="añadirCesta()">Añadir al Carrito</button>
+            <div class="fade-in">
+                <img src="${carta.img}" style="width:100%; max-width:200px; border-radius:10px; border:3px solid var(--gris-oscuro);">
+                <h3 style="margin:10px 0;">${carta.nombre}</h3>
+                <p style="font-size:1.8rem; color:var(--naranja-el99); font-weight:bold; margin:0 0 15px 0;">${carta.precio}€</p>
+                <button class="btn-primary" onclick='añadirCesta(${JSON.stringify(carta)})'>Añadir al Pedido</button>
+            </div>
         `;
-    } catch (e) { 
-        resDiv.innerHTML = "<div class='empty-state'>Error de conexión con la API.</div>"; 
-    }
+    } catch(e) { resDiv.innerHTML = "<p>Error de red.</p>"; }
 }
 
-function añadirCesta() {
-    if(!cartaBuscada) return;
-    
-    cesta.push({...cartaBuscada});
-    localStorage.setItem(`cesta_${usuarioActual}`, JSON.stringify(cesta));
+function añadirCesta(c) {
+    cesta.push(c);
     actualizarTabla();
-    
-    document.getElementById('inputBusqueda').value = "";
-    document.getElementById('resultadoBusqueda').innerHTML = "<div class='empty-state'>¡Añadida! Busca la siguiente.</div>";
-    cartaBuscada = null;
-    mostrarToast("Carta añadida al pedido");
+    mostrarToast("Carta añadida");
 }
 
 function actualizarTabla() {
-    const cuerpo = document.getElementById('cuerpoCesta');
-    cuerpo.innerHTML = "";
+    const tbody = document.getElementById('cuerpoCesta');
+    tbody.innerHTML = "";
     let total = 0;
-
-    if (cesta.length === 0) {
-        cuerpo.innerHTML = `<tr><td colspan="4" class="text-center empty-state" style="padding: 30px;">Tu cesta está vacía.</td></tr>`;
-        document.getElementById('precioTotal').innerText = "0.00";
-        return;
-    }
-
     cesta.forEach((item, i) => {
         total += parseFloat(item.precio);
-        cuerpo.innerHTML += `
-            <tr>
+        tbody.innerHTML += `
+            <tr class="fade-in">
                 <td>${item.nombre}</td>
-                <td class="text-center">1</td>
-                <td class="text-right">${item.precio}€</td>
-                <td class="text-center">
-                    <button style="background:var(--rosa-palo); color:var(--gris-oscuro); padding:5px 10px; font-size:0.8rem;" onclick="eliminar(${i})">X</button>
-                </td>
+                <td>1</td>
+                <td>${item.precio}€</td>
+                <td><button onclick="eliminar(${i})" style="background:var(--rosa-palo)">X</button></td>
             </tr>
         `;
     });
@@ -165,44 +156,34 @@ function actualizarTabla() {
 
 function eliminar(i) {
     cesta.splice(i, 1);
-    localStorage.setItem(`cesta_${usuarioActual}`, JSON.stringify(cesta));
     actualizarTabla();
 }
 
-// --- ENVÍO DE DATOS ---
+// --- ENVÍO AL EXCEL ---
 async function enviarPedidoFinal() {
-    if (cesta.length === 0) {
-        mostrarToast("No hay cartas en tu cesta.");
-        return;
-    }
-    if (URL_GOOGLE_SCRIPT.includes("TU_URL")) {
-        mostrarToast("Falta enlazar el código de Google Script.");
-        return;
-    }
-
+    if(cesta.length === 0) return;
     const btn = document.getElementById('btnEnviar');
-    btn.innerHTML = "Procesando pedido... ⏳";
     btn.disabled = true;
+    btn.innerText = "Enviando... ⏳";
 
     try {
+        // Usamos usuarioNombre para que Google cree la pestaña con su nombre real
         await fetch(URL_GOOGLE_SCRIPT, {
             method: 'POST',
             mode: 'no-cors',
             body: JSON.stringify({
-                usuario: usuarioActual,
+                usuario: usuarioNombre,
                 cesta: cesta,
                 total: document.getElementById('precioTotal').innerText
             })
         });
-
-        mostrarToast("¡Pedido confirmado y enviado!");
+        mostrarToast("¡Pedido enviado! Revisa tu Excel.");
         cesta = [];
-        localStorage.removeItem(`cesta_${usuarioActual}`);
         actualizarTabla();
-    } catch (e) {
-        mostrarToast("Error de conexión al enviar el pedido.");
+    } catch(e) { 
+        mostrarToast("Error al enviar."); 
     } finally {
-        btn.innerHTML = "Confirmar Pedido 📤";
         btn.disabled = false;
+        btn.innerText = "Enviar Pedido 🚀";
     }
 }
