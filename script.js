@@ -19,7 +19,7 @@ const auth = firebase.auth();
 const db = firebase.firestore(); 
 
 // --- 3. CONFIGURACIÓN GOOGLE SCRIPT ---
-const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbwdSMpFYiopyctSBWntuCV_TDX_IDmtaCS_ZGy814u7lwVoyqZoc3EiHEsdu6s15G5Y/exec"; // ¡REVISA ESTA URL!
+const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbyRH3OOShtvfJRoDCHjiaOCecgRdmF0yJjS_Q41JpM-MQBL7FliY_mI8RSEPPqAHZtq/exec";
 
 let usuarioNombre = "";
 let uidUsuario = ""; 
