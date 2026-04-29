@@ -12,11 +12,11 @@
 
 <div id="toast" class="toast"></div>
 
-<div id="auth-container" class="overlay">
+<div id="auth-container" class="view-section active">
     <div class="auth-wrapper slide-up">
         <div class="auth-header">
-            <h1>El99</h1>
-            <p>Comunidad MTG Hub</p>
+            <h1>El99 <span>NEXUS</span></h1>
+            <p>Portal de Pedidos MTG</p>
         </div>
 
         <div id="login-box" class="auth-box">
@@ -32,14 +32,14 @@
                 </div>
                 <button type="submit" class="btn-primary">Entrar al Nexo</button>
             </form>
-            <p class="auth-switch">¿Nuevo? <button type="button" class="btn-link" onclick="mostrarRegistro()">Crea tu perfil</button></p>
+            <p class="auth-switch">¿Eres nuevo? <button type="button" class="btn-link" onclick="mostrarRegistro()">Crea tu perfil</button></p>
         </div>
 
         <div id="register-box" class="auth-box" style="display: none;">
             <h2>Nuevo Registro</h2>
             <form id="formRegister" onsubmit="registrarUsuario(event)">
                 <div class="input-group">
-                    <label>Nombre de Mago</label>
+                    <label>Tu Nombre de Mago</label>
                     <input type="text" id="reg-user" required placeholder="Ej: Jace Beleren">
                 </div>
                 <div class="input-group">
@@ -50,45 +50,50 @@
                     <label>Contraseña</label>
                     <input type="password" id="reg-pass" required placeholder="Mínimo 6 caracteres">
                 </div>
-                <button type="submit" class="btn-secondary">Crear Perfil</button>
+                <button type="submit" class="btn-secondary">Unirse a El99</button>
             </form>
             <p class="auth-switch"><button type="button" class="btn-link" onclick="mostrarLogin()">Volver atrás</button></p>
         </div>
     </div>
 </div>
 
-<div id="app-container" style="display: none;">
+<div id="app-container" class="view-section hidden">
     <header>
         <div class="header-content">
-            <h1>El99</h1>
+            <h1 class="logo">El99</h1>
             <div class="user-info">
-                <span>Jugador: <strong id="nombreUsuarioActivo">Nadie</strong></span>
+                <span>Jugador: <strong id="nombreUsuarioActivo" class="accent-text">---</strong></span>
                 <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
             </div>
         </div>
     </header>
 
     <main class="container">
-        <section class="panel">
-            <div class="panel-header"><h2>Catálogo de Cartas (Todas las versiones)</h2></div>
-            <div class="search-bar">
-                <input type="text" id="inputBusqueda" placeholder="Ej: Krenko, Black Lotus, Counterspell...">
-                <button onclick="buscarCarta()" class="btn-primary">Buscar</button>
+        <section class="panel fade-in">
+            <div class="panel-header">
+                <h2>Catálogo de Cartas</h2>
             </div>
-            <div id="resultadoBusqueda" class="card-preview multi-print-search">
+            <div class="search-bar">
+                <input type="text" id="inputBusqueda" placeholder="Buscar en Scryfall (Ej: Krenko)...">
+                <button onclick="buscarCarta()" class="btn-primary btn-search">Buscar</button>
+            </div>
+            <div id="resultadoBusqueda" class="card-preview">
                 <p class="empty-state">Inicia una búsqueda para añadir cartas a tu pedido.</p>
             </div>
         </section>
 
-        <section class="panel">
-            <div class="panel-header"><h2>Tu Pedido</h2></div>
+        <section class="panel fade-in" style="animation-delay: 0.1s;">
+            <div class="panel-header">
+                <h2>Tu Lista de Deseos</h2>
+            </div>
             <div class="table-wrapper">
                 <table id="tablaCesta">
                     <thead>
                         <tr>
                             <th>Carta</th>
-                            <th>Edición</th> <th>Precio</th>
-                            <th>Acción</th>
+                            <th>Edición</th>
+                            <th class="text-right">Precio</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody id="cuerpoCesta"></tbody>
@@ -99,7 +104,9 @@
                     <span>Total Estimado:</span>
                     <span class="total-price"><span id="precioTotal">0.00</span>€</span>
                 </div>
-                <button id="btnEnviar" class="btn-confirmar" onclick="enviarPedidoFinal()">Confirmar y Enviar Pedido 🚀</button>
+                <button id="btnEnviar" class="btn-confirmar" onclick="enviarPedidoFinal()">
+                    Enviar Pedido Oficial 📤
+                </button>
             </div>
         </section>
     </main>
