@@ -15,8 +15,8 @@
 <div id="auth-container" class="view-section active">
     <div class="auth-wrapper slide-up">
         <div class="auth-header">
-            <h1>El99 <span>NEXUS</span></h1>
-            <p>Portal de Pedidos MTG</p>
+            <h1>El99</h1>
+            <p>Comunidad MTG Hub</p>
         </div>
 
         <div id="login-box" class="auth-box">
@@ -32,14 +32,14 @@
                 </div>
                 <button type="submit" class="btn-primary">Entrar al Nexo</button>
             </form>
-            <p class="auth-switch">¿Eres nuevo? <button type="button" class="btn-link" onclick="mostrarRegistro()">Crea tu perfil</button></p>
+            <p class="auth-switch">¿Nuevo? <button type="button" class="btn-link" onclick="mostrarRegistro()">Crea tu perfil</button></p>
         </div>
 
         <div id="register-box" class="auth-box" style="display: none;">
             <h2>Nuevo Registro</h2>
             <form id="formRegister" onsubmit="registrarUsuario(event)">
                 <div class="input-group">
-                    <label>Tu Nombre de Mago</label>
+                    <label>Nombre de Mago</label>
                     <input type="text" id="reg-user" required placeholder="Ej: Jace Beleren">
                 </div>
                 <div class="input-group">
@@ -50,7 +50,7 @@
                     <label>Contraseña</label>
                     <input type="password" id="reg-pass" required placeholder="Mínimo 6 caracteres">
                 </div>
-                <button type="submit" class="btn-secondary">Unirse a El99</button>
+                <button type="submit" class="btn-secondary">Crear Perfil</button>
             </form>
             <p class="auth-switch"><button type="button" class="btn-link" onclick="mostrarLogin()">Volver atrás</button></p>
         </div>
@@ -74,8 +74,8 @@
                 <h2>Catálogo de Cartas</h2>
             </div>
             <div class="search-bar">
-                <input type="text" id="inputBusqueda" placeholder="Buscar en Scryfall (Ej: Krenko)...">
-                <button onclick="buscarCarta()" class="btn-primary btn-search">Buscar</button>
+                <input type="text" id="inputBusqueda" placeholder="Ej: Krenko, Black Lotus, Counterspell...">
+                <button type="button" onclick="buscarCarta()" class="btn-primary btn-search">Buscar</button>
             </div>
             <div id="resultadoBusqueda" class="card-preview">
                 <p class="empty-state">Inicia una búsqueda para añadir cartas a tu pedido.</p>
@@ -92,18 +92,13 @@
                         <tr>
                             <th>Carta</th>
                             <th>Edición</th>
-                            <th class="text-right">Precio</th>
-                            <th></th>
+                            <th>Acción</th>
                         </tr>
                     </thead>
                     <tbody id="cuerpoCesta"></tbody>
                 </table>
             </div>
             <div class="cart-footer">
-                <div class="total-box">
-                    <span>Total Estimado:</span>
-                    <span class="total-price"><span id="precioTotal">0.00</span>€</span>
-                </div>
                 <button id="btnEnviar" class="btn-confirmar" onclick="enviarPedidoFinal()">
                     Enviar Pedido Oficial 📤
                 </button>

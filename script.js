@@ -18,13 +18,13 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 
 // --- 3. CONFIGURACIÓN GOOGLE SCRIPT ---
-// PEGA AQUÍ TU URL DE GOOGLE SCRIPT
-const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycby0bK4zBsRqRei1gsjqZnszjX8eLP-lP3rQ6dK5Ket8qGAzwo4NYDv-aArT8DTrYsU/exec";
+// PEGA AQUÍ TU URL
+const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbw15Yp4XNX581yn3wqXjhds2F33B7PuJPEw3w9DZg6NDjCv59cTrrx1O7PCmmRXnsIw/exec";
 
 let usuarioNombre = "";
 let cesta = [];
 let cartasEncontradas = []; 
-let indiceVersionActual = 0; // Para saber qué versión del carrusel estamos viendo
+let indiceVersionActual = 0; 
 
 // --- NOTIFICACIONES ---
 function mostrarToast(msj) {
@@ -107,7 +107,7 @@ auth.onAuthStateChanged(user => {
 
 function cerrarSesion() { auth.signOut(); }
 
-// --- BUSCADOR CON FLECHAS ---
+// --- BUSCADOR CON CARRUSEL FLUIDO ---
 async function buscarCarta() {
     const q = document.getElementById('inputBusqueda').value;
     const resDiv = document.getElementById('resultadoBusqueda');
@@ -124,104 +124,96 @@ async function buscarCarta() {
         }
 
         cartasEncontradas = d.data.slice(0, 15);
-        indiceVersionActual = 0; // Reiniciamos al buscar
-        dibujarCarrusel();
+        indiceVersionActual = 0; 
+        
+        // Creamos la estructura fija una sola vez para que la página NO salte
+        resDiv.innerHTML = `
+            <div class="carousel-container fade-in">
+                <button type="button" class="carousel-btn" onclick="cambiarVersion(-1)">❮</button>
+                <div class="carousel-content" id="tarjeta-activa">
+                    </div>
+                <button type="button" class="carousel-btn" onclick="cambiarVersion(1)">❯</button>
+            </div>
+        `;
+        
+        actualizarVistaCarrusel();
 
     } catch(e) { 
         resDiv.innerHTML = "<p class='empty-state'>Error de red al buscar.</p>"; 
     }
 }
 
-// Dibuja el cuadro central limitado con flechas
-function dibujarCarrusel() {
-    const resDiv = document.getElementById('resultadoBusqueda');
-    if (cartasEncontradas.length === 0) return;
+// Lógica para cambiar de carta haciendo un fundido (Sin salto de página)
+function cambiarVersion(direccion) {
+    indiceVersionActual += direccion;
+    if (indiceVersionActual >= cartasEncontradas.length) indiceVersionActual = 0;
+    if (indiceVersionActual < 0) indiceVersionActual = cartasEncontradas.length - 1;
+    
+    const tarjeta = document.getElementById('tarjeta-activa');
+    
+    // Hacemos el fundido a invisible
+    tarjeta.style.opacity = 0;
+    
+    // Esperamos 150ms para cambiar los datos y volver a hacerlo visible
+    setTimeout(() => {
+        actualizarVistaCarrusel();
+        tarjeta.style.opacity = 1;
+    }, 150);
+}
 
+// Solo actualiza los datos internos (imagen y texto) de la tarjeta central
+function actualizarVistaCarrusel() {
     const cartaRaw = cartasEncontradas[indiceVersionActual];
     
-    const precioRaw = cartaRaw.prices.eur || cartaRaw.prices.usd || null;
-    const precioDisplay = precioRaw ? `${precioRaw}€` : `<span style="color:#ff5252; font-size:1.1rem;">Sin Precio</span>`;
     const img = cartaRaw.image_uris ? cartaRaw.image_uris.normal : (cartaRaw.card_faces ? cartaRaw.card_faces[0].image_uris.normal : '');
     const set = cartaRaw.set_name.toUpperCase();
     const lang = cartaRaw.lang.toUpperCase();
 
-    // Contador de versión (Ej: 1 de 5)
-    const contador = `<p style="font-size:0.8rem; color:var(--texto-gris); margin-bottom:5px;">Versión ${indiceVersionActual + 1} de ${cartasEncontradas.length}</p>`;
-
-    resDiv.innerHTML = `
-        <div class="carousel-container fade-in">
-            <button class="carousel-btn" onclick="cambiarVersion(-1)">❮</button>
-            
-            <div class="carousel-content">
-                ${contador}
-                <img src="${img}" alt="Carta">
-                <h3 style="margin:0 0 5px 0; color:var(--texto-claro); font-size:1.1rem;">${cartaRaw.name}</h3>
-                <p style="font-size:0.85rem; color:var(--texto-gris); margin:0 0 10px 0;">${set} [${lang}]</p>
-                <p style="font-size:1.6rem; color:var(--naranja-el99); font-weight:bold; margin:0 0 15px 0;">${precioDisplay}</p>
-                <button class="btn-primary" onclick="añadirACesta()">Añadir al Pedido</button>
-            </div>
-
-            <button class="carousel-btn" onclick="cambiarVersion(1)">❯</button>
-        </div>
+    const contenido = `
+        <p style="font-size:0.8rem; color:var(--texto-gris); margin-bottom:5px;">Versión ${indiceVersionActual + 1} de ${cartasEncontradas.length}</p>
+        <img src="${img}" alt="Carta">
+        <h3 style="margin:0 0 5px 0; color:var(--texto-claro); font-size:1.1rem;">${cartaRaw.name}</h3>
+        <p style="font-size:0.85rem; color:var(--texto-gris); margin:0 0 15px 0;">${set} [${lang}]</p>
+        <button type="button" class="btn-primary" onclick="añadirACesta()">Añadir al Pedido</button>
     `;
-}
-
-// Función que mueven las flechas
-function cambiarVersion(direccion) {
-    indiceVersionActual += direccion;
-    // Si llega al final, vuelve al principio, y viceversa
-    if (indiceVersionActual >= cartasEncontradas.length) indiceVersionActual = 0;
-    if (indiceVersionActual < 0) indiceVersionActual = cartasEncontradas.length - 1;
     
-    dibujarCarrusel();
+    document.getElementById('tarjeta-activa').innerHTML = contenido;
 }
 
-// Añadir la carta que se está viendo en ese momento
+// Añadir a la cesta sin importar los precios
 function añadirACesta() {
     let cartaElegida = cartasEncontradas[indiceVersionActual];
-    let precioRaw = cartaElegida.prices.eur || cartaElegida.prices.usd || null;
-    let precioNum = precioRaw ? parseFloat(precioRaw) : 0;
-    let img = cartaElegida.image_uris ? cartaElegida.image_uris.normal : (cartaElegida.card_faces ? cartaElegida.card_faces[0].image_uris.normal : '');
-
+    
     let cartaParaCesta = {
         nombre: cartaElegida.name,
-        precio: precioNum,
         set: cartaElegida.set_name,
-        setCode: cartaElegida.set,
-        img: img
+        setCode: cartaElegida.set
     };
-
-    if(precioNum === 0) mostrarToast("Aviso: Carta sin precio añadida a 0€");
-    else mostrarToast("Carta añadida al pedido");
 
     cesta.push(cartaParaCesta);
     localStorage.setItem(`cesta_${usuarioNombre}`, JSON.stringify(cesta));
     actualizarTabla();
+    mostrarToast("Carta añadida al pedido");
 }
 
 function actualizarTabla() {
     const tbody = document.getElementById('cuerpoCesta');
     tbody.innerHTML = "";
-    let total = 0;
     
     if (cesta.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center empty-state" style="padding: 30px;">Tu cesta está vacía.</td></tr>`;
-        document.getElementById('precioTotal').innerText = "0.00";
+        tbody.innerHTML = `<tr><td colspan="3" class="text-center empty-state" style="padding: 30px;">Tu cesta está vacía.</td></tr>`;
         return;
     }
 
     cesta.forEach((item, i) => {
-        total += parseFloat(item.precio);
         tbody.innerHTML += `
             <tr class="fade-in">
                 <td style="color:var(--texto-claro);">${item.nombre}</td>
                 <td style="color:var(--texto-gris); font-size:0.85rem;">${item.set} [${item.setCode.toUpperCase()}]</td>
-                <td class="text-right" style="color:var(--rosa-palo); font-weight:bold;">${item.precio.toFixed(2)}€</td>
-                <td class="text-center"><button onclick="eliminar(${i})" style="background:transparent; color:#ff5252; border:1px solid #ff5252; padding:4px 8px; font-size:0.8rem; cursor:pointer;">X</button></td>
+                <td class="text-center"><button type="button" onclick="eliminar(${i})" style="background:transparent; color:#ff5252; border:1px solid #ff5252; padding:4px 8px; font-size:0.8rem; cursor:pointer;">X</button></td>
             </tr>
         `;
     });
-    document.getElementById('precioTotal').innerText = total.toFixed(2);
 }
 
 function eliminar(i) {
@@ -233,6 +225,7 @@ function eliminar(i) {
 // --- ENVÍO AL EXCEL ---
 async function enviarPedidoFinal() {
     if(cesta.length === 0) return mostrarToast("No hay cartas en tu cesta.");
+    if(URL_GOOGLE_SCRIPT.includes("TU_NUEVA")) return mostrarToast("Recuerda pegar tu URL de Google Script.");
     
     const btn = document.getElementById('btnEnviar');
     btn.disabled = true;
@@ -244,8 +237,7 @@ async function enviarPedidoFinal() {
             mode: 'no-cors',
             body: JSON.stringify({
                 usuario: usuarioNombre,
-                cesta: cesta,
-                total: document.getElementById('precioTotal').innerText
+                cesta: cesta // Ya no enviamos el total
             })
         });
         mostrarToast("¡Pedido enviado con éxito!");
