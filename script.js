@@ -18,7 +18,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 
 // --- 3. CONFIGURACIÓN GOOGLE SCRIPT ---
-const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbwdSMpFYiopyctSBWntuCV_TDX_IDmtaCS_ZGy814u7lwVoyqZoc3EiHEsdu6s15G5Y/exechttps://script.google.com/macros/s/AKfycbzFXksdVuYF8g1n76cicJI2VGuMZ-WbyXhenAH50XjN3b-L1chJEB02S39erwVWtvZE/exec"; // ¡RECUERDA PEGAR TU URL!
+const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbwdSMpFYiopyctSBWntuCV_TDX_IDmtaCS_ZGy814u7lwVoyqZoc3EiHEsdu6s15G5Y/exechttps://script.google.com/macros/s/AKfycbzFXksdVuYF8g1n76cicJI2VGuMZ-WbyXhenAH50XjN3b-L1chJEB02S39erwVWtvZE/exechttps://script.google.com/macros/s/AKfycby9njc5D0asYYTTgH6Oqj5rB1UDnsLUms4vr-kAKseIywtteBZKb0ihHTPF0NKns284/exec"; // ¡RECUERDA PEGAR TU URL!
 
 let usuarioNombre = "";
 let cesta = [];
