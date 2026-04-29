@@ -16,17 +16,17 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
-const db = firebase.firestore(); // ¡NUEVO! Conexión a la base de datos global
+const db = firebase.firestore(); 
 
 // --- 3. CONFIGURACIÓN GOOGLE SCRIPT ---
 const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbwdSMpFYiopyctSBWntuCV_TDX_IDmtaCS_ZGy814u7lwVoyqZoc3EiHEsdu6s15G5Y/exec"; // ¡REVISA ESTA URL!
 
 let usuarioNombre = "";
-let uidUsuario = ""; // ID único a prueba de trampas
+let uidUsuario = ""; 
 let cesta = [];
 let cartasEncontradas = []; 
 let indiceVersionActual = 0; 
-let consumoGlobal = 0; // Contador protegido en Firebase
+let consumoGlobal = 0; 
 const LIMITE_SEMANAL = 25; 
 
 // --- NOTIFICACIONES ---
@@ -37,7 +37,7 @@ function mostrarToast(msj) {
     setTimeout(() => t.classList.remove("show"), 3500);
 }
 
-// --- GESTIÓN GLOBAL DEL LÍMITE (Firestore) ---
+// --- LÍMITE SEMANAL Y DIRECTORIO DE COMUNIDAD ---
 function obtenerLunesActual() {
     let d = new Date();
     let day = d.getDay();
@@ -46,30 +46,17 @@ function obtenerLunesActual() {
     return lunes.getTime();
 }
 
-// Lee desde la nube (Firebase) cuántas cartas lleva
 async function cargarLimiteFirebase() {
     try {
         const doc = await db.collection("limites_semanales").doc(uidUsuario).get();
-        const lunesActual = obtenerLunesActual();
-
-        if (doc.exists) {
-            const datos = doc.data();
-            // Si las cartas registradas son de esta semana, las aplicamos. Si son de otra, empezamos de 0.
-            if (datos.semana === lunesActual) {
-                consumoGlobal = datos.cantidad;
-            } else {
-                consumoGlobal = 0; 
-            }
+        if (doc.exists && doc.data().semana === obtenerLunesActual()) {
+            consumoGlobal = doc.data().cantidad;
         } else {
             consumoGlobal = 0;
         }
-    } catch (error) {
-        console.error("Error al cargar límite global:", error);
-        consumoGlobal = 0; // Si falla la red temporalmente
-    }
+    } catch (error) { consumoGlobal = 0; }
 }
 
-// Escribe en la nube (Firebase) el nuevo total tras enviar un pedido
 async function actualizarLimiteFirebase(cantidadAñadida) {
     consumoGlobal += cantidadAñadida;
     await db.collection("limites_semanales").doc(uidUsuario).set({
@@ -78,25 +65,42 @@ async function actualizarLimiteFirebase(cantidadAñadida) {
     });
 }
 
+// ¡NUEVA FUNCIÓN! Descarga la lista de usuarios para los checkboxes
+async function cargarComunidad() {
+    const container = document.getElementById('lista-comunidad');
+    try {
+        const snapshot = await db.collection('directorio_magos').get();
+        let html = '';
+        
+        snapshot.forEach(doc => {
+            if(doc.id !== uidUsuario) { // No mostramos al propio usuario
+                let mago = doc.data();
+                html += `
+                    <label style="display: flex; align-items: center; gap: 10px; color: var(--texto-claro); margin-bottom: 8px; cursor: pointer;">
+                        <input type="checkbox" value="${mago.nombre}" class="checkbox-grupo" style="width: auto; transform: scale(1.2);">
+                        ${mago.nombre}
+                    </label>
+                `;
+            }
+        });
+        
+        if(html === '') html = '<p class="empty-state" style="margin:0;">Eres el único mago registrado en El99 por ahora.</p>';
+        container.innerHTML = html;
+    } catch(e) {
+        container.innerHTML = '<p class="empty-state" style="color:#ff5252; margin:0;">Error al invocar el directorio.</p>';
+    }
+}
+
 // --- TRANSICIONES SPA ---
 function cambiarVista(vistaDestino) {
     const authView = document.getElementById('auth-container');
     const appView = document.getElementById('app-container');
-
     if (vistaDestino === 'APP') {
-        authView.classList.remove('active');
-        authView.classList.add('hidden');
-        setTimeout(() => {
-            appView.classList.remove('hidden');
-            appView.classList.add('active');
-        }, 300);
+        authView.classList.remove('active'); authView.classList.add('hidden');
+        setTimeout(() => { appView.classList.remove('hidden'); appView.classList.add('active'); }, 300);
     } else {
-        appView.classList.remove('active');
-        appView.classList.add('hidden');
-        setTimeout(() => {
-            authView.classList.remove('hidden');
-            authView.classList.add('active');
-        }, 300);
+        appView.classList.remove('active'); appView.classList.add('hidden');
+        setTimeout(() => { authView.classList.remove('hidden'); authView.classList.add('active'); }, 300);
     }
 }
 
@@ -121,7 +125,6 @@ async function iniciarSesion(e) {
     e.preventDefault();
     const email = document.getElementById('login-email').value;
     const pass = document.getElementById('login-pass').value;
-
     try {
         await auth.signInWithEmailAndPassword(email, pass);
         mostrarToast("Acceso concedido.");
@@ -131,13 +134,19 @@ async function iniciarSesion(e) {
 auth.onAuthStateChanged(async user => {
     if (user) {
         usuarioNombre = user.displayName || user.email.split('@')[0];
-        uidUsuario = user.uid; // Vinculamos los límites a su ID único e inmutable
+        uidUsuario = user.uid; 
         document.getElementById('nombreUsuarioActivo').innerText = usuarioNombre;
         
-        // 1. Descargamos su límite de la nube
+        // Guardar/Actualizar al usuario en el directorio oficial
+        await db.collection("directorio_magos").doc(uidUsuario).set({
+            nombre: usuarioNombre,
+            email: user.email
+        }, { merge: true });
+
+        // Cargar sus datos y la lista de magos
         await cargarLimiteFirebase();
+        cargarComunidad(); // <--- Llamamos a la lista de amigos
         
-        // 2. Cargamos su cesta
         const guardado = localStorage.getItem(`cesta_${usuarioNombre}`);
         cesta = guardado ? JSON.parse(guardado) : [];
         actualizarTabla();
@@ -196,10 +205,7 @@ function cambiarVersion(direccion) {
     
     const tarjeta = document.getElementById('tarjeta-activa');
     tarjeta.style.opacity = 0;
-    setTimeout(() => {
-        actualizarVistaCarrusel();
-        tarjeta.style.opacity = 1;
-    }, 200);
+    setTimeout(() => { actualizarVistaCarrusel(); tarjeta.style.opacity = 1; }, 200);
 }
 
 function actualizarVistaCarrusel() {
@@ -213,7 +219,6 @@ function actualizarVistaCarrusel() {
     document.getElementById('c-titulo').innerText = cartaRaw.name;
     document.getElementById('c-set').innerText = `${set} [${lang}]`;
 
-    // Bloqueo Inteligente de Botón
     const btnAdd = document.getElementById('btn-add-carrusel');
     if (consumoGlobal + cesta.length >= LIMITE_SEMANAL) {
         btnAdd.disabled = true;
@@ -232,16 +237,12 @@ function añadirACesta() {
     }
 
     let cartaElegida = cartasEncontradas[indiceVersionActual];
-    let cartaParaCesta = {
-        nombre: cartaElegida.name,
-        set: cartaElegida.set_name,
-        setCode: cartaElegida.set
-    };
+    let cartaParaCesta = { nombre: cartaElegida.name, set: cartaElegida.set_name, setCode: cartaElegida.set };
 
     cesta.push(cartaParaCesta);
     localStorage.setItem(`cesta_${usuarioNombre}`, JSON.stringify(cesta));
     actualizarTabla();
-    actualizarVistaCarrusel(); // Refresca el botón para comprobar el límite
+    actualizarVistaCarrusel(); 
     mostrarToast("Carta añadida al pedido");
 }
 
@@ -249,28 +250,22 @@ function actualizarTabla() {
     const tbody = document.getElementById('cuerpoCesta');
     tbody.innerHTML = "";
     
-    // Actualizar el contador visual usando el dato de la base de datos
     const totalSemana = consumoGlobal + cesta.length;
     const txtContador = document.getElementById('contadorSemanal');
     txtContador.innerText = totalSemana;
-    
-    if(totalSemana >= LIMITE_SEMANAL) {
-        txtContador.style.color = "#ff5252"; 
-    } else {
-        txtContador.style.color = "var(--naranja-el99)";
-    }
+    txtContador.style.color = (totalSemana >= LIMITE_SEMANAL) ? "#ff5252" : "var(--naranja-el99)";
 
     if (cesta.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3" class="text-center empty-state" style="padding: 30px;">Tu cesta está vacía.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan=\"3\" class=\"text-center empty-state\" style=\"padding: 30px;\">Tu cesta está vacía.</td></tr>`;
         return;
     }
 
     cesta.forEach((item, i) => {
         tbody.innerHTML += `
-            <tr class="fade-in">
-                <td style="color:var(--texto-claro);">${item.nombre}</td>
-                <td style="color:var(--texto-gris); font-size:0.85rem;">${item.set} [${item.setCode.toUpperCase()}]</td>
-                <td class="text-center"><button type="button" onclick="eliminar(${i})" style="background:transparent; color:#ff5252; border:1px solid #ff5252; padding:4px 8px; font-size:0.8rem; cursor:pointer;">X</button></td>
+            <tr class=\"fade-in\">
+                <td style=\"color:var(--texto-claro);\">${item.nombre}</td>
+                <td style=\"color:var(--texto-gris); font-size:0.85rem;\">${item.set} [${item.setCode.toUpperCase()}]</td>
+                <td class=\"text-center\"><button type=\"button\" onclick=\"eliminar(${i})\" style=\"background:transparent; color:#ff5252; border:1px solid #ff5252; padding:4px 8px; font-size:0.8rem; cursor:pointer;\">X</button></td>
             </tr>
         `;
     });
@@ -287,18 +282,20 @@ function eliminar(i) {
 async function enviarPedidoFinal() {
     if(cesta.length === 0) return mostrarToast("No hay cartas en tu cesta.");
     
-    const inputGrupo = document.getElementById('inputGrupo').value.trim();
-    const grupoFinal = inputGrupo === "" ? "Individual" : inputGrupo;
+    // Leemos qué amigos (checkboxes) se han marcado
+    const checkboxes = document.querySelectorAll('.checkbox-grupo:checked');
+    let compañeros = Array.from(checkboxes).map(cb => cb.value);
+    
+    // Convertimos la lista de amigos en un texto bonito ("Serra, Jace, Urza")
+    let grupoFinal = compañeros.length > 0 ? compañeros.join(", ") : "Individual";
 
     const btn = document.getElementById('btnEnviar');
     btn.disabled = true;
     btn.innerText = "Enviando... ⏳";
 
     try {
-        // 1. Guardamos el nuevo límite consumido en la NUBE
         await actualizarLimiteFirebase(cesta.length);
 
-        // 2. Enviamos los datos a Google Script
         await fetch(URL_GOOGLE_SCRIPT, {
             method: 'POST',
             mode: 'no-cors',
@@ -312,7 +309,9 @@ async function enviarPedidoFinal() {
         mostrarToast("¡Pedido enviado con éxito!");
         cesta = [];
         localStorage.removeItem(`cesta_${usuarioNombre}`);
-        document.getElementById('inputGrupo').value = ""; 
+        
+        // Desmarcar checkboxes tras enviar
+        checkboxes.forEach(cb => cb.checked = false);
         actualizarTabla();
     } catch(e) { 
         mostrarToast("Error de conexión al enviar el pedido."); 
