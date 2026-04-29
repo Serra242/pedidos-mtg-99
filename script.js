@@ -18,8 +18,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 
 // --- 3. CONFIGURACIÓN GOOGLE SCRIPT ---
-// PEGA AQUÍ TU URL
-const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbw15Yp4XNX581yn3wqXjhds2F33B7PuJPEw3w9DZg6NDjCv59cTrrx1O7PCmmRXnsIw/exechttps://script.google.com/macros/s/AKfycbxebd8xBogh7YKJQzTVQOCEKmibAM4HGbx8u6rr1F-zU1p1owC8GvNtOUXzbNotAdsB/exec";
+const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbwdSMpFYiopyctSBWntuCV_TDX_IDmtaCS_ZGy814u7lwVoyqZoc3EiHEsdu6s15G5Y/exechttps://script.google.com/macros/s/AKfycbzFXksdVuYF8g1n76cicJI2VGuMZ-WbyXhenAH50XjN3b-L1chJEB02S39erwVWtvZE/exec"; // ¡RECUERDA PEGAR TU URL!
 
 let usuarioNombre = "";
 let cesta = [];
@@ -107,7 +106,7 @@ auth.onAuthStateChanged(user => {
 
 function cerrarSesion() { auth.signOut(); }
 
-// --- BUSCADOR CON CARRUSEL FLUIDO ---
+// --- BUSCADOR CON CARRUSEL FLUIDO 2.0 ---
 async function buscarCarta() {
     const q = document.getElementById('inputBusqueda').value;
     const resDiv = document.getElementById('resultadoBusqueda');
@@ -126,12 +125,27 @@ async function buscarCarta() {
         cartasEncontradas = d.data.slice(0, 15);
         indiceVersionActual = 0; 
         
-        // Creamos la estructura fija una sola vez para que la página NO salte
+        // ¡LA MAGIA ESTÁ AQUÍ! Creamos un "molde" con alturas fijas para que nada salte
         resDiv.innerHTML = `
             <div class="carousel-container fade-in">
                 <button type="button" class="carousel-btn" onclick="cambiarVersion(-1)">❮</button>
-                <div class="carousel-content" id="tarjeta-activa">
+                
+                <div class="carousel-content" id="tarjeta-activa" style="min-height: 400px; display: flex; flex-direction: column; justify-content: space-between;">
+                    
+                    <p id="c-contador" style="font-size:0.8rem; color:var(--texto-gris); margin-bottom:5px;"></p>
+                    
+                    <div style="height: 280px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                        <img id="c-img" src="" alt="Carta" style="max-height: 100%; width: auto; border-radius: 10px; border: 2px solid var(--naranja-el99); box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
                     </div>
+                    
+                    <div>
+                        <h3 id="c-titulo" style="margin:0 0 5px 0; color:var(--texto-claro); font-size:1.1rem; height: 26px; overflow: hidden;"></h3>
+                        <p id="c-set" style="font-size:0.85rem; color:var(--texto-gris); margin:0 0 15px 0; height: 20px; overflow: hidden;"></p>
+                    </div>
+
+                    <button type="button" class="btn-primary" onclick="añadirACesta()">Añadir al Pedido</button>
+                </div>
+
                 <button type="button" class="carousel-btn" onclick="cambiarVersion(1)">❯</button>
             </div>
         `;
@@ -143,7 +157,6 @@ async function buscarCarta() {
     }
 }
 
-// Lógica para cambiar de carta haciendo un fundido (Sin salto de página)
 function cambiarVersion(direccion) {
     indiceVersionActual += direccion;
     if (indiceVersionActual >= cartasEncontradas.length) indiceVersionActual = 0;
@@ -154,33 +167,27 @@ function cambiarVersion(direccion) {
     // Hacemos el fundido a invisible
     tarjeta.style.opacity = 0;
     
-    // Esperamos 150ms para cambiar los datos y volver a hacerlo visible
+    // Esperamos 200ms para inyectar los datos suavemente
     setTimeout(() => {
         actualizarVistaCarrusel();
         tarjeta.style.opacity = 1;
-    }, 150);
+    }, 200);
 }
 
-// Solo actualiza los datos internos (imagen y texto) de la tarjeta central
+// Ahora solo rellenamos los datos del molde estático, sin destruir el HTML
 function actualizarVistaCarrusel() {
     const cartaRaw = cartasEncontradas[indiceVersionActual];
-    
     const img = cartaRaw.image_uris ? cartaRaw.image_uris.normal : (cartaRaw.card_faces ? cartaRaw.card_faces[0].image_uris.normal : '');
     const set = cartaRaw.set_name.toUpperCase();
     const lang = cartaRaw.lang.toUpperCase();
 
-    const contenido = `
-        <p style="font-size:0.8rem; color:var(--texto-gris); margin-bottom:5px;">Versión ${indiceVersionActual + 1} de ${cartasEncontradas.length}</p>
-        <img src="${img}" alt="Carta">
-        <h3 style="margin:0 0 5px 0; color:var(--texto-claro); font-size:1.1rem;">${cartaRaw.name}</h3>
-        <p style="font-size:0.85rem; color:var(--texto-gris); margin:0 0 15px 0;">${set} [${lang}]</p>
-        <button type="button" class="btn-primary" onclick="añadirACesta()">Añadir al Pedido</button>
-    `;
-    
-    document.getElementById('tarjeta-activa').innerHTML = contenido;
+    document.getElementById('c-contador').innerText = `Versión ${indiceVersionActual + 1} de ${cartasEncontradas.length}`;
+    document.getElementById('c-img').src = img;
+    document.getElementById('c-titulo').innerText = cartaRaw.name;
+    document.getElementById('c-set').innerText = `${set} [${lang}]`;
 }
 
-// Añadir a la cesta sin importar los precios
+// Añadir a la cesta
 function añadirACesta() {
     let cartaElegida = cartasEncontradas[indiceVersionActual];
     
@@ -237,7 +244,7 @@ async function enviarPedidoFinal() {
             mode: 'no-cors',
             body: JSON.stringify({
                 usuario: usuarioNombre,
-                cesta: cesta // Ya no enviamos el total
+                cesta: cesta
             })
         });
         mostrarToast("¡Pedido enviado con éxito!");
