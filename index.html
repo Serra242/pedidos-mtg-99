@@ -13,13 +13,13 @@
 
 <div id="toast" class="toast"></div>
 
+<!-- AUTENTICACIÓN (Se mantiene igual) -->
 <div id="auth-container" class="view-section active">
     <div class="auth-wrapper slide-up">
         <div class="auth-header">
             <h1>El99</h1>
             <p>Comunidad MTG Hub</p>
         </div>
-
         <div id="login-box" class="auth-box">
             <h2>Iniciar Sesión</h2>
             <form id="formLogin" onsubmit="iniciarSesion(event)">
@@ -58,6 +58,7 @@
     </div>
 </div>
 
+<!-- APLICACIÓN PRINCIPAL -->
 <div id="app-container" class="view-section hidden">
     <header>
         <div class="header-content">
@@ -70,24 +71,36 @@
     </header>
 
     <main class="container">
-        <section class="panel fade-in">
+        
+        <!-- PESTAÑAS PARA MÓVIL (Se ocultan en PC solas) -->
+        <div class="mobile-tabs fade-in">
+            <button type="button" class="tab-btn active" id="tab-buscador" onclick="cambiarTab('buscador')">🔍 Buscar Cartas</button>
+            <button type="button" class="tab-btn" id="tab-cesta" onclick="cambiarTab('cesta')">🛒 Cesta (<span id="cesta-contador-tab">0</span>)</button>
+        </div>
+
+        <!-- PANEL DE BÚSQUEDA -->
+        <section class="panel fade-in panel-buscador" id="panel-buscador">
             <div class="panel-header">
                 <h2>Catálogo de Cartas</h2>
             </div>
             <div class="search-bar">
-                <input type="text" id="inputBusqueda" placeholder="Ej: Krenko, Black Lotus, Counterspell...">
+                <input type="text" id="inputBusqueda" placeholder="Buscar (Pulsa Enter)...">
                 <button type="button" onclick="buscarCarta()" class="btn-primary btn-search">Buscar</button>
             </div>
             <div id="resultadoBusqueda" class="card-preview">
-                <p class="empty-state">Inicia una búsqueda para añadir cartas a tu pedido.</p>
+                <!-- Se llenará desde JavaScript con el historial -->
             </div>
         </section>
 
-        <section class="panel fade-in" style="animation-delay: 0.1s;">
-            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
-                <h2 style="margin: 0;">Tu Lista de Deseos</h2>
-                <div style="background: rgba(0,0,0,0.2); padding: 5px 15px; border-radius: 20px; font-size: 0.85rem;">
+        <!-- PANEL DE LA CESTA -->
+        <section class="panel fade-in panel-cesta mobile-hidden" id="panel-cesta" style="animation-delay: 0.1s;">
+            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <h2 style="margin: 0;">Tu Pedido (<span id="titulo-cesta-contador">0</span>)</h2>
+                
+                <!-- TOOLTIP DEL LÍMITE (Feedback claro) -->
+                <div class="tooltip" style="background: rgba(0,0,0,0.2); padding: 5px 15px; border-radius: 20px; font-size: 0.85rem;">
                     Consumo semanal: <strong id="contadorSemanal" style="color: var(--naranja-el99);">0</strong> / 25
+                    <span class="tooltiptext">Límite de cartas máximo permitido por usuario. Se resetea cada lunes.</span>
                 </div>
             </div>
             
@@ -97,7 +110,7 @@
                         <tr>
                             <th>Carta</th>
                             <th>Edición</th>
-                            <th>Acción</th>
+                            <th class="text-center">X</th>
                         </tr>
                     </thead>
                     <tbody id="cuerpoCesta"></tbody>
@@ -106,15 +119,18 @@
             
             <div class="cart-footer">
                 <div style="margin-bottom: 20px; text-align: left;">
-                    <label style="display: block; color: var(--texto-gris); font-size: 0.9rem; margin-bottom: 8px;">
-                        👥 Selecciona a los magos con los que compartes pedido:
+                    <label style="display: block; color: var(--texto-claro); font-size: 0.95rem; margin-bottom: 5px; font-weight: bold;">
+                        👥 ¿Te unes a alguien? (Opcional)
                     </label>
+                    <p style="font-size: 0.8rem; color: var(--texto-gris); margin-top: 0; margin-bottom: 12px; line-height: 1.4;">
+                        Selecciona a los magos con los que te juntas. Agruparemos vuestras cartas en un solo paquete para ahorrar en envíos y vendedores.
+                    </p>
                     <div id="lista-comunidad" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; max-height: 150px; overflow-y: auto; border: 1px solid #333;">
                         <p class="empty-state" style="font-size: 0.85rem; margin: 0;">Invocando magos de El99...</p>
                     </div>
                 </div>
 
-                <button id="btnEnviar" class="btn-confirmar" onclick="enviarPedidoFinal()">
+                <button id="btnEnviar" class="btn-confirmar" onclick="enviarPedidoFinal()" disabled>
                     Enviar Pedido Oficial 📤
                 </button>
             </div>
