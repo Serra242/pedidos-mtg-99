@@ -13,7 +13,7 @@
 
 <div id="toast" class="toast"></div>
 
-<!-- AUTENTICACIÓN (Se mantiene igual) -->
+<!-- AUTENTICACIÓN -->
 <div id="auth-container" class="view-section active">
     <div class="auth-wrapper slide-up">
         <div class="auth-header">
@@ -71,61 +71,66 @@
     </header>
 
     <main class="container">
-        
-        <!-- PESTAÑAS PARA MÓVIL (Se ocultan en PC solas) -->
+
+        <!-- PESTAÑAS MÓVILES -->
         <div class="mobile-tabs fade-in">
             <button type="button" class="tab-btn active" id="tab-buscador" onclick="cambiarTab('buscador')">🔍 Buscar Cartas</button>
-            <button type="button" class="tab-btn" id="tab-cesta" onclick="cambiarTab('cesta')">🛒 Cesta (<span id="cesta-contador-tab">0</span>)</button>
+            <button type="button" class="tab-btn" id="tab-cesta" onclick="cambiarTab('cesta')">
+                🛒 Cesta (<span id="cesta-contador-tab">0</span>)
+                <span class="tab-badge" id="tab-badge" style="display:none;">!</span>
+            </button>
         </div>
 
-        <!-- PANEL DE BÚSQUEDA -->
+        <!-- PANEL BÚSQUEDA -->
         <section class="panel fade-in panel-buscador" id="panel-buscador">
             <div class="panel-header">
                 <h2>Catálogo de Cartas</h2>
             </div>
             <div class="search-bar">
-                <input type="text" id="inputBusqueda" placeholder="Buscar (Pulsa Enter)...">
+                <input type="text" id="inputBusqueda" placeholder="Buscar carta (Enter o botón)...">
                 <button type="button" onclick="buscarCarta()" class="btn-primary btn-search">Buscar</button>
             </div>
             <div id="resultadoBusqueda" class="card-preview">
-                <!-- Se llenará desde JavaScript con el historial -->
+                <!-- Llenado desde JS -->
             </div>
         </section>
 
-        <!-- PANEL DE LA CESTA -->
-        <section class="panel fade-in panel-cesta mobile-hidden" id="panel-cesta" style="animation-delay: 0.1s;">
-            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <h2 style="margin: 0;">Tu Pedido (<span id="titulo-cesta-contador">0</span>)</h2>
-                
-                <!-- TOOLTIP DEL LÍMITE (Feedback claro) -->
-                <div class="tooltip" style="background: rgba(0,0,0,0.2); padding: 5px 15px; border-radius: 20px; font-size: 0.85rem;">
-                    Consumo semanal: <strong id="contadorSemanal" style="color: var(--naranja-el99);">0</strong> / 25
-                    <span class="tooltiptext">Límite de cartas máximo permitido por usuario. Se resetea cada lunes.</span>
+        <!-- PANEL CESTA -->
+        <section class="panel fade-in panel-cesta mobile-hidden" id="panel-cesta">
+            <div class="panel-cesta-header">
+                <h2>Tu Pedido (<span id="titulo-cesta-contador">0</span>)</h2>
+                <div class="limite-badge tooltip">
+                    Semanal: <strong id="contadorSemanal" class="accent-text">0</strong> / 25
+                    <span class="tooltiptext">Límite máximo de cartas por semana. Se resetea cada lunes.</span>
                 </div>
             </div>
-            
-            <div class="table-wrapper" style="margin-top: 15px;">
+
+            <div class="table-wrapper">
                 <table id="tablaCesta">
                     <thead>
                         <tr>
                             <th>Carta</th>
                             <th>Edición</th>
-                            <th class="text-center">X</th>
+                            <th class="text-center">Borrar</th>
                         </tr>
                     </thead>
                     <tbody id="cuerpoCesta"></tbody>
                 </table>
             </div>
-            
+
             <div class="cart-footer">
-                <div style="margin-bottom: 20px; text-align: left;">
-                    <label style="display: block; color: var(--texto-claro); font-size: 0.95rem; margin-bottom: 5px; font-weight: bold;">
-                        👥 ¿Te unes a alguien? (Opcional)
-                    </label>
-                    <p style="font-size: 0.8rem; color: var(--texto-gris); margin-top: 0; margin-bottom: 12px; line-height: 1.4;">
-                        Selecciona a los magos con los que te juntas. Agruparemos vuestras cartas en un solo paquete para ahorrar en envíos y vendedores.
-                    </p>
-                    <div id="lista-comunidad" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; max-height: 150px; overflow-y: auto; border: 1px solid #333;">
+                <!-- VACIAR CESTA -->
+                <div class="footer-acciones">
+                    <button type="button" class="btn-vaciar" id="btnVaciar" onclick="vaciarCesta()" disabled>
+                        🗑️ Vaciar cesta
+                    </button>
+                </div>
+
+                <!-- COMPAÑEROS DE GRUPO -->
+                <div class="grupo-section">
+                    <label class="grupo-label">👥 ¿Te unes a alguien? <span class="opcional-tag">Opcional</span></label>
+                    <p class="grupo-desc">Selecciona magos para agrupar vuestras cartas en un mismo paquete y ahorrar en envíos.</p>
+                    <div id="lista-comunidad" class="lista-comunidad">
                         <p class="empty-state" style="font-size: 0.85rem; margin: 0;">Invocando magos de El99...</p>
                     </div>
                 </div>
@@ -135,6 +140,7 @@
                 </button>
             </div>
         </section>
+
     </main>
 </div>
 
