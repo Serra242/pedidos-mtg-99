@@ -13,7 +13,43 @@
 
 <div id="toast" class="toast"></div>
 
-<!-- AUTENTICACIÓN -->
+<!-- ===== MODAL: HISTORIAL DE PEDIDOS ===== -->
+<div id="modal-historial" class="modal-overlay hidden-modal">
+    <div class="modal-box slide-up">
+        <div class="modal-header">
+            <h3>📜 Mis Pedidos Anteriores</h3>
+            <button type="button" class="modal-close" onclick="cerrarModal('modal-historial')">✕</button>
+        </div>
+        <div id="modal-historial-contenido">
+            <p class="empty-state">Cargando...</p>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL: PANEL ADMIN ===== -->
+<div id="modal-admin" class="modal-overlay hidden-modal">
+    <div class="modal-box modal-box-wide slide-up">
+        <div class="modal-header">
+            <h3>⚙️ Panel de Admin — El99</h3>
+            <button type="button" class="modal-close" onclick="cerrarModal('modal-admin')">✕</button>
+        </div>
+
+        <div class="admin-config">
+            <label class="admin-config-label">🎚️ Límite semanal de cartas por usuario:</label>
+            <div class="admin-config-row">
+                <input type="number" id="admin-limite-input" class="qty-input" style="width:90px;" min="1" max="200">
+                <button type="button" class="btn-primary" style="width:auto; padding: 10px 20px;" onclick="guardarLimiteAdmin()">Guardar</button>
+            </div>
+        </div>
+
+        <h4 class="admin-section-title">📦 Pedidos de esta semana</h4>
+        <div id="admin-resumen-semana">
+            <p class="empty-state">Cargando pedidos...</p>
+        </div>
+    </div>
+</div>
+
+<!-- ===== AUTENTICACIÓN ===== -->
 <div id="auth-container" class="view-section active">
     <div class="auth-wrapper slide-up">
         <div class="auth-header">
@@ -35,7 +71,6 @@
             </form>
             <p class="auth-switch">¿Nuevo? <button type="button" class="btn-link" onclick="mostrarRegistro()">Crea tu perfil</button></p>
         </div>
-
         <div id="register-box" class="auth-box" style="display: none;">
             <h2>Nuevo Registro</h2>
             <form id="formRegister" onsubmit="registrarUsuario(event)">
@@ -58,23 +93,28 @@
     </div>
 </div>
 
-<!-- APLICACIÓN PRINCIPAL -->
+<!-- ===== APLICACIÓN PRINCIPAL ===== -->
 <div id="app-container" class="view-section hidden">
     <header>
         <div class="header-content">
             <h1 class="logo">El99</h1>
             <div class="user-info">
-                <span>Jugador: <strong id="nombreUsuarioActivo" class="accent-text">---</strong></span>
-                <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
+                <button id="btn-admin" class="btn-admin hidden-admin" onclick="abrirAdmin()">⚙️ Admin</button>
+                <button class="btn-historial" onclick="abrirHistorial()">📜 Mis Pedidos</button>
+                <span class="user-name-label">Jugador: <strong id="nombreUsuarioActivo" class="accent-text">---</strong></span>
+                <button class="btn-logout" onclick="cerrarSesion()">Salir</button>
             </div>
         </div>
     </header>
 
+    <!-- Banner de notificación de grupos -->
+    <div id="banner-notif" class="banner-notif hidden-banner"></div>
+
     <main class="container">
 
-        <!-- PESTAÑAS MÓVILES -->
+        <!-- TABS MÓVIL -->
         <div class="mobile-tabs fade-in">
-            <button type="button" class="tab-btn active" id="tab-buscador" onclick="cambiarTab('buscador')">🔍 Buscar Cartas</button>
+            <button type="button" class="tab-btn active" id="tab-buscador" onclick="cambiarTab('buscador')">🔍 Buscar</button>
             <button type="button" class="tab-btn" id="tab-cesta" onclick="cambiarTab('cesta')">
                 🛒 Cesta (<span id="cesta-contador-tab">0</span>)
                 <span class="tab-badge" id="tab-badge" style="display:none;">!</span>
@@ -90,17 +130,15 @@
                 <input type="text" id="inputBusqueda" placeholder="Buscar carta (Enter o botón)...">
                 <button type="button" onclick="buscarCarta()" class="btn-primary btn-search">Buscar</button>
             </div>
-            <div id="resultadoBusqueda" class="card-preview">
-                <!-- Llenado desde JS -->
-            </div>
+            <div id="resultadoBusqueda" class="card-preview"></div>
         </section>
 
         <!-- PANEL CESTA -->
         <section class="panel fade-in panel-cesta mobile-hidden" id="panel-cesta">
             <div class="panel-cesta-header">
                 <h2>Tu Pedido (<span id="titulo-cesta-contador">0</span>)</h2>
-                <div class="limite-badge tooltip">
-                    Semanal: <strong id="contadorSemanal" class="accent-text">0</strong> / 25
+                <div id="limite-badge-wrapper" class="limite-badge tooltip">
+                    Semanal: <strong id="contadorSemanal" class="accent-text">0</strong> / <span id="limite-display">25</span>
                     <span class="tooltiptext">Límite máximo de cartas por semana. Se resetea cada lunes.</span>
                 </div>
             </div>
@@ -119,19 +157,17 @@
             </div>
 
             <div class="cart-footer">
-                <!-- VACIAR CESTA -->
                 <div class="footer-acciones">
                     <button type="button" class="btn-vaciar" id="btnVaciar" onclick="vaciarCesta()" disabled>
                         🗑️ Vaciar cesta
                     </button>
                 </div>
 
-                <!-- COMPAÑEROS DE GRUPO -->
                 <div class="grupo-section">
                     <label class="grupo-label">👥 ¿Te unes a alguien? <span class="opcional-tag">Opcional</span></label>
                     <p class="grupo-desc">Selecciona magos para agrupar vuestras cartas en un mismo paquete y ahorrar en envíos.</p>
                     <div id="lista-comunidad" class="lista-comunidad">
-                        <p class="empty-state" style="font-size: 0.85rem; margin: 0;">Invocando magos de El99...</p>
+                        <p class="empty-state" style="font-size:0.85rem; margin:0;">Invocando magos de El99...</p>
                     </div>
                 </div>
 
