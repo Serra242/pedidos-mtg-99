@@ -22,11 +22,11 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 // --- GOOGLE SCRIPT (pega aquí solo tu URL, sin duplicados) ---
-const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbwMV6DIKk92Lfv4A-x6sAEGkZzHyGhQFpTzN12TKQ_L1NZ8lmz-wp-zlfCsMN4oW242/exec";
+const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbzcaZQkN4Pef8b9eQln12a3VVjULqG6WmfUN0YQXF9AWR_IwFBfaCfTDnIwJuiTzMeH/exec";
 
 // --- UID ADMIN (pon tu UID de Firebase aquí para ver el panel admin) ---
 // Lo encuentras en Firebase Console > Authentication > Users
-const ADMIN_UID = "TU_UID_DE_ADMIN_AQUI";
+const ADMIN_UID = "bpIkZDDYO5WggKHJTuMeUTPvMBf2";
 
 // ============================================================
 // ESTADO GLOBAL
